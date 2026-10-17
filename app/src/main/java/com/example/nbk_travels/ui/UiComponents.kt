@@ -30,7 +30,7 @@ object Ui {
     fun scroll(context: Context, child: View): ScrollView = ScrollView(context).apply {
         isFillViewport = true
         clipToPadding = false
-        addView(child, ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(child, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         overScrollMode = View.OVER_SCROLL_NEVER
     }

@@ -72,35 +72,3 @@ All profile endpoints require an authenticated bearer token and must operate on 
 ## Integration note for the current PHP website
 
 The supplied website files call SQL through PHP pages and use PHP sessions; no JSON API controllers or bearer-token validation layer was included in the pasted tree. These route names are the contract expected by the Android client, not a claim that the routes are already deployed. Implement and secure them on the server before setting `NBK_API_BASE_URL`.
-FILE_TREE.txt
-nbk_travels/
-â”œâ”€â”€ .github/workflows/android.yml
-â”œâ”€â”€ app/
-â”‚   â”œâ”€â”€ build.gradle.kts
-â”‚   â””â”€â”€ src/
-â”‚       â”œâ”€â”€ main/
-â”‚       â”‚   â”œâ”€â”€ AndroidManifest.xml
-â”‚       â”‚   â”œâ”€â”€ java/com/example/nbk_travels/
-â”‚       â”‚   â”‚   â”œâ”€â”€ MainActivity.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ data/ApiClient.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ data/AppRepository.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ data/Models.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ data/SessionStore.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/NbkTheme.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/UiComponents.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/screens/AuthScreens.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/screens/BookingScreens.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/screens/HomeScreen.kt
-â”‚       â”‚   â”‚   â”œâ”€â”€ ui/screens/SettingsScreens.kt
-â”‚       â”‚   â”‚   â””â”€â”€ util/InputValidator.kt
-â”‚       â”‚   â””â”€â”€ res/
-â”‚       â”‚       â”œâ”€â”€ drawable/ (fresh NBK vector and shape resources)
-â”‚       â”‚       â”œâ”€â”€ drawable-nodpi/ (NBK logo and hero artwork)
-â”‚       â”‚       â”œâ”€â”€ mipmap-*/ (custom launcher assets)
-â”‚       â”‚       â””â”€â”€ values/ (colours, strings, themes)
-â”‚       â”œâ”€â”€ test/java/com/example/nbk_travels/InputValidatorTest.kt
-â”‚       â””â”€â”€ androidTest/java/com/example/nbk_travels/AppSmokeTest.kt
-â”œâ”€â”€ README_ANDROID.md
-â””â”€â”€ docs/API_CONTRACT.md
-
-The bundle is an overlay/patch for the existing Android Studio project. It intentionally preserves your existing Gradle wrapper, settings.gradle.kts, root build.gradle.kts, and version catalog.
