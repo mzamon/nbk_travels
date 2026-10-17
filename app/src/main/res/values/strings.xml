@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">nbk_travels</string>
+    <string name="app_name">NBK Travel</string>
+    <string name="app_tagline">Shuttle Booking Management</string>
+    <string name="splash_message">Connecting you to your destination...</string>
+    <string name="default_web_client_id"></string>
 </resources>

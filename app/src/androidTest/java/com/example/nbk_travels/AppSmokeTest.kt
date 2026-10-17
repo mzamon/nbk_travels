@@ -1,16 +1,17 @@
 package com.example.nbk_travels
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Assert.assertEquals
+import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class AppSmokeTest {
-    @Test
-    fun useAppContext() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.nbk_travels", appContext.packageName)
+    @Test fun appLaunchesToSplashScreen() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            onView(withText("Connecting you to your destination..."))
+                .check(matches(isDisplayed()))
+        }
     }
 }
