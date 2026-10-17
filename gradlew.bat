@@ -28,6 +28,7 @@ if "%OS%"=="Windows_NT" setlocal
 
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
+if not defined GRADLE_USER_HOME set GRADLE_USER_HOME=%DIRNAME%.gradle-local
 @rem This is normally unused
 set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%
