@@ -59,7 +59,7 @@ object InputValidator {
         if (travelDate.isBefore(LocalDate.now())) return "Travel date cannot be in the past."
 
         if (!Regex("^([01]\\d|2[0-3]):[0-5]\\d$").matches(time)) return "Choose a valid travel time."
-        if (passengers !in 1..50) return "Passenger count must be between 1 and 50."
+        if (passengers !in 1..15) return "Passenger count must be between 1 and 15."
         val parsedFare = fare.toDoubleOrNull() ?: return "Enter a valid fare in South African rand."
         if (parsedFare < 0.0 || !parsedFare.isFinite()) return "Fare cannot be negative."
         return null

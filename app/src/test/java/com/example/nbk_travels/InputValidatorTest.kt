@@ -39,7 +39,7 @@ class InputValidatorTest {
 
     @Test fun rejectsInvalidPassengerCount() {
         assertEquals(
-            "Passenger count must be between 1 and 50.",
+            "Passenger count must be between 1 and 15.",
             InputValidator.validateBooking("Sandton", "OR Tambo", LocalDate.now().plusDays(1).toString(), "09:30", 0, "450")
         )
     }

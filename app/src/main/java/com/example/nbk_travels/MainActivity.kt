@@ -12,6 +12,8 @@ import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AlertDialog
 import androidx.credentials.CredentialManager
@@ -25,6 +27,8 @@ import com.example.nbk_travels.data.BookingDraft
 import com.example.nbk_travels.data.OperationResult
 import com.example.nbk_travels.data.SessionStore
 import com.example.nbk_travels.data.UserProfile
+import com.example.nbk_travels.data.remote.OpenMeteoApi
+import com.example.nbk_travels.data.repository.WeatherRepository
 import com.example.nbk_travels.ui.NbkTheme
 import com.example.nbk_travels.ui.Ui
 import com.example.nbk_travels.ui.screens.AuthScreens
@@ -32,6 +36,7 @@ import com.example.nbk_travels.ui.screens.BookingScreens
 import com.example.nbk_travels.ui.screens.HomeScreen
 import com.example.nbk_travels.ui.screens.SettingsScreens
 import com.example.nbk_travels.util.InputValidator
+import com.example.nbk_travels.utils.FareCalculator
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -49,6 +54,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedBookingId: String? = null
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
+    private val weatherRepository = WeatherRepository()
+    private val openMeteoApi = OpenMeteoApi()
     private var splashTransitionPending = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,8 +64,7 @@ class MainActivity : AppCompatActivity() {
         sessionStore = SessionStore(applicationContext)
         currentUser = repository.currentUser()
         applyAppearance(currentUser?.darkMode ?: false)
-        window.statusBarColor = NbkTheme.DEEP_NAVY
-        window.navigationBarColor = NbkTheme.DEEP_NAVY
+        configureSystemBars(transparent = false, lightStatusBars = false)
 
         val restoredName = savedInstanceState?.getString(STATE_SCREEN)
         currentScreen = restoredName?.let { runCatching { Screen.valueOf(it) }.getOrNull() } ?: Screen.SPLASH
@@ -164,6 +170,8 @@ class MainActivity : AppCompatActivity() {
             Screen.BOOKING_FORM -> if (user != null) BookingScreens.createBooking(
                 this,
                 onSubmit = ::attemptBooking,
+                onEstimate = ::estimateFare,
+                onWeather = ::checkWeather,
                 onBack = { navigate(Screen.HOME) }
             ) else AuthScreens.login(this, ::attemptLogin, { navigate(Screen.REGISTER) }, { navigate(Screen.FORGOT_PASSWORD) }, ::startGoogleSignIn)
             Screen.BOOKING_DETAILS -> if (user != null) BookingScreens.details(
@@ -211,9 +219,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         ViewCompat.requestApplyInsets(view)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        window.decorView.systemUiVisibility = if (currentScreen == Screen.ONBOARDING) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        configureSystemBars(
+            transparent = true,
+            lightStatusBars = currentScreen != Screen.ONBOARDING
+        )
     }
 
     private fun attemptLogin(email: String, password: String) {
@@ -278,6 +287,49 @@ class MainActivity : AppCompatActivity() {
                 } else toast(result.message)
             }.onFailure { error -> toast(error.message ?: "Booking could not be submitted.") }
         }
+    }
+
+    private fun estimateFare(
+            pickup: String,
+            dropoff: String,
+            passengers: Int,
+            onResult: (Double) -> Unit
+        ) {
+            val validation = InputValidator.validateBooking(
+                pickup, dropoff, java.time.LocalDate.now().plusDays(1).toString(), "00:00", passengers, "250"
+            )
+            if (validation != null && validation !in listOf("Choose a valid travel date.", "Choose a valid travel time.")) {
+                toast(validation)
+                return
+            }
+            runAsync({
+                val start = openMeteoApi.geocodeTown(pickup)
+                val end = openMeteoApi.geocodeTown(dropoff)
+                FareCalculator.calculateFare(
+                    FareCalculator.haversineDistanceKm(
+                        start.latitude, start.longitude, end.latitude, end.longitude
+                    ),
+                    passengers
+                )
+            }) { result ->
+                result.onSuccess(onResult)
+                    .onFailure { error -> toast(error.message ?: "Fare estimate failed.") }
+            }
+        }
+
+    private fun checkWeather(dropoff: String, date: String, onResult: (String) -> Unit) {
+            if (dropoff.trim().length < 2) {
+                toast("Enter a drop-off location first.")
+                return
+            }
+            runAsync({ weatherRepository.getWeather(dropoff, date) }) { result ->
+                result.onSuccess { weather ->
+                    onResult(
+                        "$dropoff on ${weather.date}: high ${weather.highCelsius.toInt()}°C, " +
+                            "low ${weather.lowCelsius.toInt()}°C, ${weather.rainProbability}% chance of rain"
+                    )
+                }.onFailure { error -> toast(error.message ?: "Weather lookup failed.") }
+            }
     }
 
     private fun openBookingDetails(bookingId: String) {
@@ -499,6 +551,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyAppearance(darkMode: Boolean) {
         AppCompatDelegate.setDefaultNightMode(if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun configureSystemBars(transparent: Boolean, lightStatusBars: Boolean) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = if (transparent) android.graphics.Color.TRANSPARENT else NbkTheme.DEEP_NAVY
+        window.navigationBarColor = if (transparent) android.graphics.Color.TRANSPARENT else NbkTheme.DEEP_NAVY
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = lightStatusBars
+            isAppearanceLightNavigationBars = lightStatusBars
+        }
     }
 
     private fun <T> runAsync(work: () -> T, callback: (Result<T>) -> Unit) {

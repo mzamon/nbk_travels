@@ -25,7 +25,13 @@ import java.util.Calendar
 import java.util.Locale
 
 object BookingScreens {
-    fun createBooking(context: Context, onSubmit: (BookingDraft) -> Unit, onBack: () -> Unit): View {
+    fun createBooking(
+        context: Context,
+        onSubmit: (BookingDraft) -> Unit,
+        onEstimate: (pickup: String, dropoff: String, passengers: Int, onResult: (Double) -> Unit) -> Unit,
+        onWeather: (dropoff: String, date: String, onResult: (String) -> Unit) -> Unit,
+        onBack: () -> Unit
+    ): View {
         val root = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(NbkTheme.background(context)) }
         root.addView(Ui.topBar(context, "Book a Shuttle", onBack))
         val body = LinearLayout(context).apply {
@@ -93,7 +99,7 @@ object BookingScreens {
         stepper.addView(plus)
         body.addView(stepper, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = Ui.dp(context, 8) })
         minus.setOnClickListener { if (passengerCount > 1) passengerCount--; countLabel.text = passengerCount.toString() }
-        plus.setOnClickListener { if (passengerCount < 50) passengerCount++; countLabel.text = passengerCount.toString() }
+        plus.setOnClickListener { if (passengerCount < 15) passengerCount++; countLabel.text = passengerCount.toString() }
 
         body.addView(Ui.label(context, "Fare (ZAR)"))
         val fare = Ui.input(context, "e.g. 450.00", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
@@ -101,6 +107,22 @@ object BookingScreens {
         body.addView(Ui.text(context, "Your booking will be marked Pending until confirmed by an NBK Travel administrator.", 12f, NbkTheme.secondaryText(context)).apply {
             setPadding(0, Ui.dp(context, 6), 0, Ui.dp(context, 12))
         })
+        val weatherResult = Ui.text(context, "", 12f, NbkTheme.secondaryText(context))
+        body.addView(Ui.button(context, "Estimate fare", Ui.ButtonStyle.OUTLINE) {
+            onEstimate(pickup.text.toString(), dropoff.text.toString(), passengerCount) { estimate ->
+                fare.setText("%.2f".format(Locale.US, estimate))
+            }
+        })
+        body.addView(Ui.button(context, "Check weather at drop-off", Ui.ButtonStyle.OUTLINE) {
+            val selectedDate = date.text.toString().trim()
+            if (selectedDate.isBlank()) {
+                date.error = "Choose a travel date first."
+            } else {
+                onWeather(dropoff.text.toString(), selectedDate) { result -> weatherResult.text = result }
+            }
+        })
+        body.addView(weatherResult)
+        body.addView(Ui.space(context, 6))
         body.addView(Ui.button(context, "Create Booking", Ui.ButtonStyle.PRIMARY) {
             val draftDate = date.text.toString().trim()
             val draftTime = time.text.toString().trim()
